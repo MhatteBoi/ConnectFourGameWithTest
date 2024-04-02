@@ -1,0 +1,102 @@
+﻿@inject GameState State
+
+
+<h3>Connect Four Game!</h3>
+
+<HeadContent>
+    <style>
+        :root{
+            /* vet inte om det är så här du tänkte dig, sätt parametrar nere i code och använd de här  */
+            --board-bg: @BoardColor;
+            --player1: @Player1;
+            --player2: @Player2;
+        }
+    </style>
+</HeadContent>
+
+<nav>
+    @for(byte i = 0; i < 7; i++)
+    {
+        var col = i;
+        <span title="Click to play a piece" @onclick="() => PlayPiece(col)">🔽</span>
+    }
+</nav>
+<article>
+    @winnerMessage 
+    <button  class="btn-info btn-sm" @onclick="ResetGame">Reset the game</button>
+    <br/>
+    <span class="alert-danger">@errorMessage</span>
+    <span class="alert-info">@errorMessage</span>
+</article>
+<div>
+    <div class="board">
+        @for (var i=0; i<42; i++)
+        {
+            <span class="container">
+                <span></span>
+            </span>
+        }
+    </div>
+    @for (var i = 0; i < 42; i++)
+    {
+       <span class="@pieces[i]"></span>
+    }
+</div>
+
+@code {
+    //reset spelet
+    protected override void OnInitialized()
+    {
+        State.ResetBoard();
+    }
+    void ResetGame()
+    {
+        State.ResetBoard();
+        winnerMessage = string.Empty;
+        errorMessage = string.Empty;
+        pieces = new string[42];
+
+    }
+
+    private string[] pieces = new string[42];
+    private void PlayPiece(byte col)
+    {
+        try{
+            var player = State.PlayerTurn;
+            var turn = State.CurrentTurn;
+            var landingRow = State.PlayPiece(col);
+            pieces[turn] = $"player{player} col{col} drop{landingRow}";
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+
+        winnerMessage = State.CheckForWin() switch
+        {
+            GameState.WinState.Player1_Wins => "Player 1 wins! ",
+            GameState.WinState.Player2_Wins => "Player 2 wins! ",
+            GameState.WinState.Tie => "Its a Tie!",
+            _ => ""
+        };
+    }
+
+    private string[] piece = new string[42];
+    private string winnerMessage = string.Empty;
+    private string errorMessage = string.Empty;
+
+    private string CurrentTurn => (winnerMessage == string.Empty) ? $"player {State.PlayerTurn}'s turn" : "";
+    private string ResetStyle => (winnerMessage == string.Empty) ? "display: none;" : "";
+
+
+    [Parameter]
+    public string BoardColor { get; set; } = "black";
+
+    [Parameter]
+    public string Player1 { get; set; } = "Green";
+
+    [Parameter]
+    public string Player2 { get; set; } = "Purple";
+}
+
+
